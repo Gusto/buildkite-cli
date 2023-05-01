@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 require 'bk'
 
-Bk::Client.new.annotations(ARGV[0])
+Bk::CLI.new.annotations(ARGV[0])

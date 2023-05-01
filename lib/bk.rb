@@ -4,14 +4,11 @@ require 'json'
 require 'httparty'
 require 'tty-pager'
 require 'tty-markdown'
+require 'tty-spinner'
 require_relative "bk/version"
 
 module Bk
   class Error < StandardError; end
-
-  def initialize(buildkite_api_token: nil)
-    @buildkite_api_token = buildkite_api_token if buildkite_api_token
-  end
 
 
   BUILD_ANNOTIONS_QUERY = <<-GRAPHQL
@@ -45,23 +42,27 @@ module Bk
     }
   GRAPHQL
 
-  class Client
-    def parse_slug_from_url(url)
-      # https://buildkite.com/my-org/my-pipeline/builds/1234 => my-org/my-pipeline/1234
-      url.delete_prefix('https://buildkite.com/').gsub('/builds', '')
+  class CLI
+    attr_reader :spinner
+
+    def initialize(buildkite_api_token: nil)
+      @client = Client.new(buildkite_api_token: buildkite_api_token)
+
+      @spinner = TTY::Spinner.new("Talking to Buildkite API... :spinner", clear: true, format: :dots)
     end
 
     def annotations(url)
-      slug = parse_slug_from_url(url)
-      puts "#{url} => #{slug}"
 
-      query = BUILD_ANNOTIONS_QUERY % {slug: slug}
+      result = nil
+      spinner.run("Done") do |spinner|
+        result = @client.annotations(url)
+      end
 
-      result = execute(query)
+      build = result["data"]["build"]
+      puts "Build #{build['number']}: #{build['state']}"
 
-      annotation_edges = result['data']['build']['annotations']['edges']
+      annotation_edges = build['annotations']['edges']
       annotations = annotation_edges.map {|edge| edge['node'] }
-
 
       TTY::Pager.page do |page|
         annotations.each do |annotation|
@@ -75,6 +76,25 @@ module Bk
           page.puts ""
         end
       end
+    end
+  end
+
+  class Client
+    def initialize(buildkite_api_token: nil)
+      @buildkite_api_token = buildkite_api_token if buildkite_api_token
+    end
+
+    def parse_slug_from_url(url)
+      # https://buildkite.com/my-org/my-pipeline/builds/1234 => my-org/my-pipeline/1234
+      url.delete_prefix('https://buildkite.com/').gsub('/builds', '')
+    end
+
+    def annotations(url)
+      slug = parse_slug_from_url(url)
+
+      query = BUILD_ANNOTIONS_QUERY % {slug: slug}
+
+      execute(query)
     end
 
     def execute(query)

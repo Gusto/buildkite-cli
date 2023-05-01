@@ -35,4 +35,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "json"
   spec.add_dependency "tty-pager"
   spec.add_dependency "tty-markdown"
+  spec.add_dependency "tty-spinner"
 end
