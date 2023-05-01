@@ -1,0 +1,10 @@
+/.bundle/
+/.env
+/.envrc
+/.yardoc
+/_yardoc/
+/coverage/
+/doc/
+/pkg/
+/spec/reports/
+/tmp/
