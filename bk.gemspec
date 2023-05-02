@@ -36,4 +36,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-pager"
   spec.add_dependency "tty-markdown"
   spec.add_dependency "tty-spinner"
+  spec.add_dependency "tty-box"
+  spec.add_dependency "graphql-client"
 end

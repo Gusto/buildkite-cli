@@ -6,48 +6,67 @@ require 'tty-pager'
 require 'tty-markdown'
 require 'tty-spinner'
 require 'tty-box'
+require 'graphql/client'
+require 'graphql/client/http'
 require_relative "bk/version"
 
 module Bk
   class Error < StandardError; end
 
+  # Configure GraphQL endpoint using the basic HTTP network adapter.
+  HTTP = GraphQL::Client::HTTP.new("https://graphql.buildkite.com/v1") do
+    def headers(context)
+      unless token = context[:access_token] || ENV['BUILDKITE_API_TOKEN']
+        raise 'missing BuildKite access token'
+      end
 
-  BUILD_ANNOTIONS_QUERY = <<-GRAPHQL
-    query {
-      build(slug: "%<slug>s") {
-        number
-        uuid
+      {
+        'Authorization' => "Bearer #{token}",
+        'Content-Type' => 'application/json',
+      }
+    end
+  end
 
-        url
-        pullRequest {
-          id
-        }
-        state
-        scheduledAt
-        startedAt
-        finishedAt
-        canceledAt
+  SCHEMA_PATH = Pathname.new(__FILE__).dirname.dirname.join('schema.json')
+  Schema = GraphQL::Client.load_schema(SCHEMA_PATH.to_s)
+  # Schema = GraphQL::Client.load_schema(HTTP)
+  Client = GraphQL::Client.new(schema: Schema, execute: HTTP)
 
-        annotations(first: 200) {
-          edges {
-            node {
-              context
-              style
-              body {
-                text
+  class CLI
+    BuildAnnotationsQuery = Client.parse <<-'GRAPHQL'
+      query($slug: ID!) {
+        build(slug: $slug) {
+          number
+          uuid
+
+          url
+          pullRequest {
+            id
+          }
+          state
+          scheduledAt
+          startedAt
+          finishedAt
+          canceledAt
+
+          annotations(first: 200) {
+            edges {
+              node {
+                context
+                style
+                body {
+                  text
+                }
               }
             }
           }
         }
       }
-    }
-  GRAPHQL
+    GRAPHQL
 
-  class CLI
     attr_reader :spinner, :pastel
 
     def initialize(buildkite_api_token: nil)
-      @client = Client.new(buildkite_api_token: buildkite_api_token)
       @pastel = Pastel.new
 
       @success_color = @pastel.green.detach
@@ -81,20 +100,26 @@ module Bk
       $stdout.tty?
     end
 
+    def parse_slug_from_url(url)
+      # https://buildkite.com/my-org/my-pipeline/builds/1234 => my-org/my-pipeline/1234
+      url.delete_prefix('https://buildkite.com/').gsub('/builds', '')
+    end
+
     def annotations(url)
+      slug = parse_slug_from_url(url)
 
       result = nil
       spinner.run("Done") do |spinner|
-        result = @client.annotations(url)
+        result = Client.query(BuildAnnotationsQuery, variables: {slug: slug})
       end
 
       TTY::Pager.page do |page|
-        build = result["data"]["build"]
-        started_at = Time.parse(build['startedAt'])
-        finished_at = Time.parse(build['finishedAt']) if build['finishedAt']
+        build = result.data.build
+        started_at = Time.parse(build.started_at)
+        finished_at = Time.parse(build.finished_at) if build.finished_at
 
-        page.puts "Build #{build['number']}: #{build['state']}"
-        if build['state'] == 'RUNNING' || build['state'] == 'FAILING'
+        page.puts "Build #{build.number}: #{build.state}"
+        if build.state == 'RUNNING' || build.state == 'FAILING'
           duration = Time.now - started_at
           minutes = (duration/60).to_i
           seconds = (duration%60).to_i
@@ -104,18 +129,18 @@ module Bk
         end
         page.puts TTY::Markdown.parse("---")
 
-        annotation_edges = build['annotations']['edges']
-        annotations = annotation_edges.map {|edge| edge['node'] }
+        annotation_edges = build.annotations.edges
+        annotations = annotation_edges.map {|edge| edge.node }
 
         annotations.each do |annotation|
-          style = annotation["style"]
+          style = annotation.style
           color = @style_color_map[style]
 
-          context = annotation['context']
+          context = annotation.context
           page.puts color.("#{vertical_pipe}#{context}")
           page.puts color.(vertical_pipe)
 
-          body = annotation['body']['text']
+          body = annotation.body.text
           output = TTY::Markdown.parse(body)
           output.each_line do |line|
             page.puts "#{color.(vertical_pipe)}  #{line}"
@@ -125,55 +150,4 @@ module Bk
     end
   end
 
-  class Client
-    def initialize(buildkite_api_token: nil)
-      @buildkite_api_token = buildkite_api_token if buildkite_api_token
-    end
-
-    def parse_slug_from_url(url)
-      # https://buildkite.com/my-org/my-pipeline/builds/1234 => my-org/my-pipeline/1234
-      url.delete_prefix('https://buildkite.com/').gsub('/builds', '')
-    end
-
-    def annotations(url)
-      slug = parse_slug_from_url(url)
-
-      query = BUILD_ANNOTIONS_QUERY % {slug: slug}
-
-      execute(query)
-    end
-
-    def execute(query)
-      body = {
-        query: query,
-      }.to_json
-
-      response = HTTParty.post(
-        'https://graphql.buildkite.com/v1',
-        body: body,
-        headers: {
-          'Authorization' => "Bearer #{buildkite_api_token}",
-          'Content-Type' => 'application/json',
-        }
-      )
-      body = JSON.parse(response.body)
-
-      unless body['data']
-        puts response.code
-        pp body
-        raise 'problem getting data back'
-      end
-
-      body
-    end
-
-    def buildkite_api_token
-      return @buildkite_api_token if defined?(@buildkite_api_token)
-
-      @buildkite_api_token = ENV['BUILDKITE_GQL_API_TOKEN']
-      raise 'missing BUILDKITE_GQL_API_TOKEN' unless @buildkite_api_token && !@buildkite_api_token.empty?
-
-      @buildkite_api_token
-    end
-  end
 end
