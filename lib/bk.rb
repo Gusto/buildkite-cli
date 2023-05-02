@@ -5,6 +5,7 @@ require 'httparty'
 require 'tty-pager'
 require 'tty-markdown'
 require 'tty-spinner'
+require 'tty-box'
 require_relative "bk/version"
 
 module Bk
@@ -43,12 +44,41 @@ module Bk
   GRAPHQL
 
   class CLI
-    attr_reader :spinner
+    attr_reader :spinner, :pastel
 
     def initialize(buildkite_api_token: nil)
       @client = Client.new(buildkite_api_token: buildkite_api_token)
+      @pastel = Pastel.new
+
+      @success_color = @pastel.green.detach
+      @error_color = @pastel.red.detach
+      @warning_color = @pastel.yellow.detach
+      @info_color = @pastel.blue.detach
+      @default_color = @pastel.gray.detach
+
+      @style_color_map = Hash.new(@default_color)
+      @style_color_map.merge! ({
+        "SUCCESS" => @success_color,
+        "ERROR" => @error_color,
+        "WARNING" => @warning_color,
+        "INFO" => @info_color
+      })
 
       @spinner = TTY::Spinner.new("Talking to Buildkite API... :spinner", clear: true, format: :dots)
+    end
+
+    VERTICAL_PIPE="｜"
+
+    def colorize(text, color)
+      is_tty? ? color.(text) : text
+    end
+
+    def vertical_pipe
+      is_tty? ? "#{VERTICAL_PIPE} " : ""
+    end
+
+    def is_tty?
+      $stdout.tty?
     end
 
     def annotations(url)
@@ -58,22 +88,38 @@ module Bk
         result = @client.annotations(url)
       end
 
-      build = result["data"]["build"]
-      puts "Build #{build['number']}: #{build['state']}"
-
-      annotation_edges = build['annotations']['edges']
-      annotations = annotation_edges.map {|edge| edge['node'] }
-
       TTY::Pager.page do |page|
+        build = result["data"]["build"]
+        started_at = Time.parse(build['startedAt'])
+        finished_at = Time.parse(build['finishedAt']) if build['finishedAt']
+
+        page.puts "Build #{build['number']}: #{build['state']}"
+        if build['state'] == 'RUNNING' || build['state'] == 'FAILING'
+          duration = Time.now - started_at
+          minutes = (duration/60).to_i
+          seconds = (duration%60).to_i
+          page.puts "running for #{minutes}m #{seconds}s"
+        elsif finished_at
+          page.puts "finished at #{finished_at}"
+        end
+        page.puts TTY::Markdown.parse("---")
+
+        annotation_edges = build['annotations']['edges']
+        annotations = annotation_edges.map {|edge| edge['node'] }
+
         annotations.each do |annotation|
-          context = annotation["context"]
-          page.puts TTY::Markdown.parse("# #{context}")
-
           style = annotation["style"]
+          color = @style_color_map[style]
 
-          body = annotation["body"]["text"]
-          page.write TTY::Markdown.parse(body)
-          page.puts ""
+          context = annotation['context']
+          page.puts color.("#{vertical_pipe}#{context}")
+          page.puts color.(vertical_pipe)
+
+          body = annotation['body']['text']
+          output = TTY::Markdown.parse(body)
+          output.each_line do |line|
+            page.puts "#{color.(vertical_pipe)}  #{line}"
+          end
         end
       end
     end
