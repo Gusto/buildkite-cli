@@ -105,8 +105,25 @@ module Bk
       url.delete_prefix('https://buildkite.com/').gsub('/builds', '')
     end
 
-    def annotations(url)
-      slug = parse_slug_from_url(url)
+    def determine_slug
+      output = `gh pr checks`
+      output.lines.each do |line|
+        if line =~ %r{https://buildkite.com/([^/]+)/([^/]+)/builds/(\d+)}
+          return "#{$1}/#{$2}/#{$3}"
+        end
+      end
+      return nil
+    end
+
+    def annotations(url = nil)
+      if url
+        slug = parse_slug_from_url(url)
+      else
+        slug = determine_slug
+      end
+      unless slug
+        raise ArgumentError, "Unable to figure out slug to use"
+      end
 
       result = nil
       spinner.run("Done") do |spinner|
