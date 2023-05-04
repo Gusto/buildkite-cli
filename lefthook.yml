@@ -1,0 +1,7 @@
+pre-commit:
+  parallel: true
+  commands:
+    standardrb:
+      glob: "{*.rb,exe/*}"
+      run: standardrb --fix {staged_files}
+      auto_stage: true
