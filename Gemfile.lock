@@ -10,6 +10,7 @@ PATH
       tty-markdown
       tty-pager
       tty-spinner
+      zeitwerk
 
 GEM
   remote: https://rubygems.org/
@@ -69,6 +70,7 @@ GEM
       concurrent-ruby (~> 1.0)
     unicode-display_width (2.4.2)
     unicode_utils (1.4.0)
+    zeitwerk (2.6.8)
 
 PLATFORMS
   arm64-darwin-21
