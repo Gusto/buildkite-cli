@@ -20,9 +20,12 @@ GEM
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
+    addressable (2.8.4)
+      public_suffix (>= 2.0.2, < 6.0)
     concurrent-ruby (1.2.2)
     docopt (0.6.1)
-    git (1.10.2)
+    git (1.18.0)
+      addressable (~> 2.8)
       rchardet (~> 1.8)
     graphql (2.0.21)
     graphql-client (0.18.0)
@@ -41,6 +44,7 @@ GEM
     multi_xml (0.6.0)
     pastel (0.8.0)
       tty-color (~> 0.5)
+    public_suffix (5.0.1)
     rake (13.0.6)
     rchardet (1.8.0)
     rexml (3.2.5)
@@ -76,6 +80,7 @@ GEM
 
 PLATFORMS
   arm64-darwin-21
+  x86_64-linux
 
 DEPENDENCIES
   bk!
