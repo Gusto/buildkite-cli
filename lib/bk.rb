@@ -8,7 +8,6 @@ require "tty-spinner"
 require "tty-box"
 require "graphql/client"
 require "graphql/client/http"
-require "git"
 require_relative "bk/version"
 
 module Bk
@@ -38,14 +37,12 @@ module Bk
       query($slug: ID!) {
         build(slug: $slug) {
           number
-          uuid
 
           url
           pullRequest {
             id
           }
           state
-          scheduledAt
           startedAt
           finishedAt
           canceledAt
@@ -69,7 +66,6 @@ module Bk
 
     def initialize(buildkite_api_token: nil)
       @pastel = Pastel.new
-      @g = Git.open(Dir.pwd)
 
       @success_color = @pastel.green.detach
       @error_color = @pastel.red.detach
