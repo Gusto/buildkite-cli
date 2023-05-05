@@ -39,4 +39,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "tty-box"
   spec.add_dependency "graphql-client"
   spec.add_dependency "zeitwerk"
+  spec.add_dependency "dry-cli"
 end

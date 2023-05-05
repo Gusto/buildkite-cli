@@ -3,7 +3,7 @@
 require "zeitwerk"
 loader = Zeitwerk::Loader.for_gem
 loader.inflector.inflect(
-  "cli"   => "CLI",
+  "cli" => "CLI"
 )
 loader.setup
 
@@ -15,6 +15,7 @@ require "tty-spinner"
 require "tty-box"
 require "graphql/client"
 require "graphql/client/http"
+require "dry/cli"
 
 require_relative "bk/version"
 

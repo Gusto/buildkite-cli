@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 require "bk"
 
-Bk::CLI.new.annotations(ARGV[0])
+Dry::CLI.new(Bk::CLI::Commands).call

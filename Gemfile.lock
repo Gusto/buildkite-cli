@@ -3,6 +3,7 @@ PATH
   specs:
     bk (0.1.0)
       docopt
+      dry-cli
       graphql-client
       httparty
       json
@@ -22,6 +23,7 @@ GEM
       tzinfo (~> 2.0)
     concurrent-ruby (1.2.2)
     docopt (0.6.1)
+    dry-cli (0.7.0)
     graphql (2.0.21)
     graphql-client (0.18.0)
       activesupport (>= 3.0)
