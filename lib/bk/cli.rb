@@ -93,15 +93,7 @@ module Bk
         GRAPHQL
 
         def call(args:, url_or_slug: nil)
-          slug = if url_or_slug
-            if url_or_slug.start_with?("https:")
-              parse_slug_from_url(url_or_slug)
-            else
-              url_or_slug
-            end
-          else
-            determine_slug
-          end
+          slug = determine_slug(url_or_slug)
 
           unless slug
             raise ArgumentError, "Unable to figure out slug to use"
@@ -170,14 +162,23 @@ module Bk
           url.delete_prefix("https://buildkite.com/").gsub("/builds", "")
         end
 
-        def determine_slug
-          output = `gh pr checks`
-          output.lines.each do |line|
-            if line =~ %r{https://buildkite.com/([^/]+)/([^/]+)/builds/(\d+)}
-              return "#{$1}/#{$2}/#{$3}"
+        def determine_slug(url_or_slug = nil)
+          if url_or_slug
+            if url_or_slug.start_with?("https:")
+              parse_slug_from_url(url_or_slug)
+            else
+              url_or_slug
             end
+          else
+            output = `gh pr checks`
+            output.lines.each do |line|
+              if line =~ %r{https://buildkite.com/([^/]+)/([^/]+)/builds/(\d+)}
+                return "#{$1}/#{$2}/#{$3}"
+              end
+            end
+
+            nil
           end
-          nil
         end
 
         def query(graphql_query, **kwargs)
