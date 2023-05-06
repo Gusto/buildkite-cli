@@ -107,10 +107,7 @@ module Bk
             raise ArgumentError, "Unable to figure out slug to use"
           end
 
-          result = nil
-          spinner.run("Done") do |spinner|
-            result = Client.query(BuildAnnotationsQuery, variables: {slug: slug})
-          end
+          result = query(BuildAnnotationsQuery, variables: {slug: slug})
 
           TTY::Pager.page do |page|
             build = result.data.build
@@ -182,8 +179,16 @@ module Bk
           end
           nil
         end
-      end
 
+        def query(graphql_query, **kwargs)
+          result = nil
+          spinner.run("Done") do |spinner|
+            result = Client.query(BuildAnnotationsQuery, **kwargs)
+          end
+
+          result
+        end
+      end
       register "annotations", Annotations
     end
   end
