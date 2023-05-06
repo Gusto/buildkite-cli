@@ -7,16 +7,14 @@ module Bk
       extend Dry::CLI::Registry
 
       class Base < Dry::CLI::Command
+        include Color
+
         attr_reader :spinner, :pastel
 
         def initialize(buildkite_api_token: nil)
           @pastel = Pastel.new
 
           @spinner = TTY::Spinner.new("Talking to Buildkite API... :spinner", clear: true, format: :dots)
-        end
-
-        def colorize(text, color)
-          is_tty? ? color.call(text) : text
         end
 
         def vertical_pipe
@@ -27,28 +25,32 @@ module Bk
           $stdout.tty?
         end
 
-        def color_map
-          return @color_map if defined?(@color_map)
+        def annotation_colors
+          return @annotation_colors if defined?(@annotation_colors)
 
-          success_color = @pastel.green.detach
-          error_color = @pastel.red.detach
-          warning_color = @pastel.yellow.detach
-          info_color = @pastel.blue.detach
-          default_color = @pastel.gray.detach
-
-          @color_map = Hash.new(default_color)
-          @color_map.merge!({
-            # annotations style
+          @annotation_colors = create_color_hash({
             "SUCCESS" => success_color,
             "ERROR" => error_color,
             "WARNING" => warning_color,
-            "INFO" => info_color,
+            "INFO" => info_color
+          })
+        end
 
-            # build state
+        def build_colors
+          return @build_colors if defined?(@build_colors)
+          @build_colors = create_color_hash({
             "FAILED" => error_color
           })
+        end
 
-          @color_map
+        def job_colors
+          return @job_colors if defined?(@job_colors)
+
+          @job_colors = Hash.new(error_color)
+          @job_colors.merge!({
+            "0" => success_color,
+            "BROKEN" => @pastel.dim
+          })
         end
 
         private
@@ -86,11 +88,11 @@ module Bk
           result
         end
 
-        def build_header(build, io: )
+        def build_header(build, io:)
           started_at = Time.parse(build.started_at)
           finished_at = Time.parse(build.finished_at) if build.finished_at
 
-          build_color = color_map[build.state]
+          build_color = build_colors[build.state]
 
           io.puts "#{build_color.call(vertical_pipe)}#{build.pipeline.slug} / #{build.branch}"
           io.puts build_color.call(vertical_pipe)
@@ -171,7 +173,7 @@ module Bk
             # indent each annotation to separate it from the build status
             annotations.each_with_index do |annotation, index|
               style = annotation.style
-              color = color_map[style]
+              color = annotation_colors[style]
 
               context = annotation.context
               page.puts "  #{color.call("#{vertical_pipe}#{context}")}"
@@ -192,16 +194,17 @@ module Bk
             end
           end
         end
-
       end
 
       class Artifacts < Base
         desc "Show Artifacts for a Build"
         argument :url_or_slug, type: :string, required: false, desc: "Build URL or Build slug"
 
+        option :glob, required: false, desc: "Glob of artifacts to list"
+
         BuildArtifactsQuery = Client.parse <<-GRAPHQL
-          query {
-            build(slug: "gusto/zenpayroll/759716") {
+          query($slug: ID!, $jobs_after: String) {
+            build(slug: $slug) {
               number
               message
               uuid
@@ -215,21 +218,41 @@ module Bk
               pullRequest {
                 id
               }
+
               state
               scheduledAt
               startedAt
               finishedAt
               canceledAt
 
-              jobs(first:10) {
+              jobs(first: 500, after: $jobs_after) {
+                pageInfo {
+                  endCursor
+                  hasNextPage
+                }
                 edges {
                   node {
                     __typename
-                    ... on JobTypeCommand {
-                      url
+                    ... on JobTypeWait {
                       uuid
                       label
-                      artifacts(first: 10) {
+                    }
+                    ... on JobTypeTrigger {
+                      uuid
+                      label
+                    }
+
+                    ... on JobTypeCommand {
+                      uuid
+                      label
+
+                      url
+                      exitStatus
+
+                      parallelGroupIndex
+                      parallelGroupTotal
+
+                      artifacts(first: 500) {
                         edges {
                           node {
                             state
@@ -247,27 +270,56 @@ module Bk
 
         GRAPHQL
 
-        def call(args:, url_or_slug: nil)
+        def call(args:, url_or_slug: nil, **options)
           slug = determine_slug(url_or_slug)
           unless slug
             raise ArgumentError, "Unable to figure out slug to use"
           end
 
-          result = query(BuildArtifactsQuery, variables: {slug: slug})
-          build = result.data.build
+          glob = options[:glob]
 
-          build_header(build, io: $stdout)
+          jobs_after = nil
+          has_next_page = true
 
-          jobs = build.jobs.edges.map(&:node)
+          while has_next_page
+            result = query(BuildArtifactsQuery, variables: {slug: slug, jobs_after: jobs_after})
 
-          jobs.each do |job|
-            puts job.label
-
-            artifacts = job.artifacts.edges.map(&:node)
-
-            artifacts.each do |artifact|
-              puts "- #{artifact.path}"
+            build = result.data.build
+            # only show the first time
+            if jobs_after.nil?
+              build_header(build, io: $stdout)
             end
+
+            jobs_after = build.jobs.page_info.end_cursor
+            has_next_page = build.jobs.page_info.has_next_page
+
+            jobs = build.jobs.edges.map(&:node)
+            jobs.each do |job|
+              next unless job.respond_to?(:exit_status)
+
+              artifacts = job.artifacts.edges.map(&:node).select { |artifact| glob_matches?(glob, artifact.path) }
+              next unless artifacts.any?
+
+              color = job_colors[job.exit_status]
+              header = color.call(job.label)
+              if job.parallel_group_index && job.parallel_group_total
+                header = "#{header} (#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
+              end
+
+              puts header
+
+              artifacts.each do |artifact|
+                puts "  - #{artifact.path}"
+              end
+            end
+          end
+        end
+
+        def glob_matches?(glob, path)
+          if glob
+            File.fnmatch?(glob, path, File::FNM_PATHNAME)
+          else
+            true
           end
         end
       end
