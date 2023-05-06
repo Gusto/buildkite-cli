@@ -3,42 +3,6 @@ module Bk
     VERTICAL_PIPE = "⏐"
     HORIZONTAL_PIPE = "⎯"
 
-    BuildAnnotationsQuery = Client.parse <<-GRAPHQL
-      query($slug: ID!) {
-        build(slug: $slug) {
-          number
-
-          pipeline {
-            slug
-          }
-
-          branch
-          message
-
-          url
-          pullRequest {
-            id
-          }
-          state
-          startedAt
-          finishedAt
-          canceledAt
-
-          annotations(first: 200) {
-            edges {
-              node {
-                context
-                style
-                body {
-                  text
-                }
-              }
-            }
-          }
-        }
-      }
-    GRAPHQL
-
     module Commands
       extend Dry::CLI::Registry
 
@@ -91,6 +55,42 @@ module Bk
       class Annotations < Base
         desc "Show Annotations for a Build"
         argument :url_or_slug, type: :string, required: false, desc: "Build URL or Build slug"
+
+        BuildAnnotationsQuery = Client.parse <<-GRAPHQL
+          query($slug: ID!) {
+            build(slug: $slug) {
+              number
+
+              pipeline {
+                slug
+              }
+
+              branch
+              message
+
+              url
+              pullRequest {
+                id
+              }
+              state
+              startedAt
+              finishedAt
+              canceledAt
+
+              annotations(first: 200) {
+                edges {
+                  node {
+                    context
+                    style
+                    body {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        GRAPHQL
 
         def call(args:, url_or_slug: nil)
           slug = if url_or_slug
