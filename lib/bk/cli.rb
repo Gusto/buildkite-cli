@@ -88,7 +88,9 @@ module Bk
           result
         end
 
-        def build_header(build, io:)
+        def build_header(build)
+          io = StringIO.new
+
           started_at = Time.parse(build.started_at)
           finished_at = Time.parse(build.finished_at) if build.finished_at
 
@@ -110,7 +112,7 @@ module Bk
             io.puts "#{build_color.call(vertical_pipe)}#{build.state.downcase.capitalize} in #{duration}s"
           end
 
-          io.puts ""
+          io.string
         end
       end
 
@@ -165,7 +167,7 @@ module Bk
           TTY::Pager.page do |page|
             build = result.data.build
 
-            build_header(build, io: page)
+            page.puts build_header(build)
 
             annotation_edges = build.annotations.edges
             annotations = annotation_edges.map { |edge| edge.node }
@@ -287,7 +289,7 @@ module Bk
             build = result.data.build
             # only show the first time
             if jobs_after.nil?
-              build_header(build, io: $stdout)
+              puts build_header(build)
             end
 
             jobs_after = build.jobs.page_info.end_cursor
