@@ -168,6 +168,7 @@ module Bk
             build = result.data.build
 
             page.puts build_header(build)
+            page.puts ""
 
             annotation_edges = build.annotations.edges
             annotations = annotation_edges.map { |edge| edge.node }
@@ -290,6 +291,7 @@ module Bk
             # only show the first time
             if jobs_after.nil?
               puts build_header(build)
+              puts ""
             end
 
             jobs_after = build.jobs.page_info.end_cursor
