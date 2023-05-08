@@ -17,7 +17,7 @@ module Bk
     end
 
     def default_color
-      @default_color ||= @pastel.gray.detach
+      @default_color ||= @pastel.white.detach
     end
 
     def colorize(text, color)
