@@ -204,6 +204,7 @@ module Bk
         argument :url_or_slug, type: :string, required: false, desc: "Build URL or Build slug"
 
         option :glob, required: false, desc: "Glob of artifacts to list"
+        option :download, type: :boolean, required: false, desc: "Should or should not download"
 
         BuildArtifactsQuery = Client.parse <<-GRAPHQL
           query($slug: ID!, $jobs_after: String) {
@@ -280,6 +281,7 @@ module Bk
           end
 
           glob = options[:glob]
+          download = options[:download]
 
           jobs_after = nil
           has_next_page = true
@@ -313,7 +315,12 @@ module Bk
               puts header
 
               artifacts.each do |artifact|
-                puts "  - #{artifact.path}"
+                if download
+                  puts "  - #{artifact.path} (downloading to tmp/bk/[filename])"
+                  download_artifact(artifact)
+                else
+                  puts "  - #{artifact.path}"
+                end
               end
             end
           end
@@ -325,6 +332,15 @@ module Bk
           else
             true
           end
+        end
+
+        def download_artifact(artifact)
+          download_url = artifact.to_h['downloadURL']
+          redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
+          artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws['location']))
+          path = Pathname.new("tmp/bk/#{artifact.path}")
+          FileUtils.mkdir_p(path.dirname)
+          path.write(artifact_response.body)
         end
       end
 
