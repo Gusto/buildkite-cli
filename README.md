@@ -10,14 +10,28 @@ See Development section while in release
 
 ## Usage
 
-Display annoations from a specific build:
+### Annotations
 
-    $ bk https://buildkite.com/your-org/your-pipeline/builds/1234
+Display annotations of a specific build:
 
-Display annotations from the most recent build (requires `gh`):
+    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234
+
+Display annotations of the most recent build (requires `gh`):
 
 
-    $ bk
+    $ bk annotations
+
+### Artifacts
+
+Display artifacts of a specific build:
+
+    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234
+
+Display artifacts of a specific build matching a glob (tip: quote the glob pattern to avoid your shell expanding):
+
+    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log"
+
+### To be continue?
 
 More to come?
 
