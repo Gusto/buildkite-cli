@@ -5,12 +5,12 @@ require_relative "lib/bk/version"
 Gem::Specification.new do |spec|
   spec.name = "bk"
   spec.version = Bk::VERSION
+  spec.licenses = ['MIT']
   spec.authors = ["Josh Nichols"]
   spec.email = ["josh.nichols@gusto.com"]
 
   spec.summary = "CLI for Buildkite, similar to gh for GitHub"
-  # spec.description = "TODO: Write a longer description or delete this line."
-  spec.homepage = "https://github.com/technicalpickles/bk"
+  spec.homepage = "https://github.com/gusto/bk"
   spec.required_ruby_version = ">= 2.6.0"
 
   spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
