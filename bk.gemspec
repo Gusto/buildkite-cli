@@ -3,7 +3,7 @@
 require_relative "lib/bk/version"
 
 Gem::Specification.new do |spec|
-  spec.name = "bk"
+  spec.name = "buildkite-cli"
   spec.version = Bk::VERSION
   spec.licenses = ['MIT']
   spec.authors = ["Josh Nichols"]
