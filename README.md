@@ -10,7 +10,11 @@ See Development section while in release
 
 ## Usage
 
+See `bk --help` and `bk <subcommand> --help` for most accurate usage. Below are some examples!
+
 ### Annotations
+
+Usage: `bk annotations [slug_or_url]`
 
 Display annotations of a specific build:
 
@@ -18,10 +22,11 @@ Display annotations of a specific build:
 
 Display annotations of the most recent build (requires `gh`):
 
-
     $ bk annotations
 
 ### Artifacts
+
+Usage: `bk artifacts [slug_or_url] [--glob <pattern>] [--download]`
 
 Display artifacts of a specific build:
 
@@ -31,15 +36,19 @@ Display artifacts of a specific build matching a glob (tip: quote the glob patte
 
     $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log"
 
+Download artifacts of a specific build matching a glob (tip: quote the glob pattern to avoid your shell expanding):
+
+    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log" --download
+
 ### To be continue?
 
-More to come?
+More to come? Whatchu want? Feature requests and PRs welcome!
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. You can also run `bin/console` for an interactive prompt that will allow you to experiment. You can run the command from this checkout with:
 
-    bk $ bundle exec exe/bk [args]
+    bk $ bundle exec exe/bk [args...]
 
 To install this gem onto your local machine, run `bundle exec rake install`. If you want to use `bk` in different ruby versions, you'll need to use your version manager to switch and install it. You might find this snippet useful:
 
