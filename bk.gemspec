@@ -31,7 +31,6 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "httparty"
-  spec.add_dependency "docopt"
   spec.add_dependency "json"
   spec.add_dependency "tty-pager"
   spec.add_dependency "tty-markdown"
