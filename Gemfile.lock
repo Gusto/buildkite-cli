@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    bk (0.1.0)
+    buildkite-cli (0.1.0)
       dry-cli
       graphql-client
       httparty
@@ -77,7 +77,7 @@ PLATFORMS
   arm64-darwin-22
 
 DEPENDENCIES
-  bk!
+  buildkite-cli!
   rake (~> 13.0)
 
 BUNDLED WITH
