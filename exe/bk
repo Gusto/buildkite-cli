@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
-require "bk"
+require "buildkite/cli"
 
-Dry::CLI.new(Bk::CLI::Commands).call
+Buildkite::CLI.loader.eager_load
+Dry::CLI.new(Buildkite::CLI::Commands).call

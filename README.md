@@ -1,4 +1,4 @@
-# Bk
+# buildkite-cli
 
 CLI for poking around Buildkite, like `gh` for GitHub
 

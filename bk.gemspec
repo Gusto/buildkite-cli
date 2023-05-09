@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/bk/version"
+require_relative "lib/buildkite/cli/version"
 
 Gem::Specification.new do |spec|
   spec.name = "buildkite-cli"
-  spec.version = Bk::VERSION
+  spec.version = Buildkite::CLI::VERSION
   spec.licenses = ['MIT']
   spec.authors = ["Josh Nichols"]
   spec.email = ["josh.nichols@gusto.com"]

@@ -5,8 +5,7 @@ task default: %i[]
 
 namespace :buildkite do
   task :dump_schema do
-    require "./lib/bk"
-    require "graphql/client"
-    GraphQL::Client.dump_schema(Bk::HTTP, "schema.json")
+    require_relative './lib/buildkite/cli.rb'
+    Buildkite::CLI.dump_schema
   end
 end
