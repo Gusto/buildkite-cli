@@ -156,7 +156,7 @@ module Bk
           }
         GRAPHQL
 
-        def call(args:, url_or_slug: nil)
+        def call(args: {}, url_or_slug: nil)
           slug = determine_slug(url_or_slug)
           unless slug
             raise ArgumentError, "Unable to figure out slug to use"
@@ -274,7 +274,7 @@ module Bk
 
         GRAPHQL
 
-        def call(args:, url_or_slug: nil, **options)
+        def call(args: {}, url_or_slug: nil, **options)
           slug = determine_slug(url_or_slug)
           unless slug
             raise ArgumentError, "Unable to figure out slug to use"
