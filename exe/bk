@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 require "buildkite/cli"
-
+require "pry"
+require "pry-stack_explorer"
+require "pry-rescue"
 Buildkite::CLI.loader.eager_load
 Dry::CLI.new(Buildkite::CLI::Commands).call

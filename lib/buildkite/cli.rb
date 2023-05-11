@@ -40,6 +40,7 @@ module Buildkite
     def self.loader
       return @loader if defined?(@loader)
       @loader = Zeitwerk::Loader.for_gem
+      @loader.push_dir("#{__dir__}/..", namespace: Buildkite)
       @loader.inflector.inflect(
         "cli" => "CLI"
       )
