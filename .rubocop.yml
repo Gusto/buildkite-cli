@@ -1,3 +1,4 @@
+# Only use standardrb, but keep .rubocop.yml for tool compatibility: https://github.com/standardrb/standard#running-standards-rules-via-rubocop
 require:
   - standard
   - rubocop-performance
