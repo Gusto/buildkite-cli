@@ -46,7 +46,6 @@ module Bk
 
         result
       end
-
     end
 
     register "annotations", Annotations

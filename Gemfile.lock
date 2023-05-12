@@ -36,7 +36,6 @@ GEM
       multi_xml (>= 0.5.2)
     i18n (1.13.0)
       concurrent-ruby (~> 1.0)
-    interception (0.5)
     json (2.6.3)
     kramdown (2.4.0)
       rexml
@@ -55,9 +54,6 @@ GEM
     pry (0.14.2)
       coderay (~> 1.1)
       method_source (~> 1.0)
-    pry-rescue (1.5.2)
-      interception (>= 0.5)
-      pry (>= 0.12.0)
     pry-stack_explorer (0.6.1)
       binding_of_caller (~> 1.0)
       pry (~> 0.13)
@@ -137,7 +133,6 @@ PLATFORMS
 DEPENDENCIES
   buildkite-cli!
   pry
-  pry-rescue
   pry-stack_explorer
   rake (~> 13.0)
   ruby-lsp

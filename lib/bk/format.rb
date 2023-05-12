@@ -75,6 +75,5 @@ module Bk
         "BROKEN" => @pastel.dim
       })
     end
-
   end
 end

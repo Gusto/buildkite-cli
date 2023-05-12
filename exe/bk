@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
 require "bk"
 
+require "pry"
 Dry::CLI.new(Bk::Commands).call

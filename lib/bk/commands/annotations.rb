@@ -48,26 +48,23 @@ module Bk
 
         result = query(BuildAnnotationsQuery, variables: {slug: slug})
 
-        TTY::Pager.page do |page|
-          build = result.data.build
+        build = result.data.build
 
-          page.puts build_header(build)
-          page.puts ""
+        $stdout.puts build_header(build)
+        $stdout.puts ""
 
-          annotation_edges = build.annotations.edges
-          annotations = annotation_edges.map { |edge| edge.node }
+        annotation_edges = build.annotations.edges
+        annotations = annotation_edges.map { |edge| edge.node }
 
-          format = AnnotationFormatter::Markdown.new
-          # indent each annotation to separate it from the build status
-          annotations.each_with_index do |annotation, index|
-
-            page.puts format.call(annotation)
-            # horizontal separator between each
-            unless index == annotations.length - 1
-              page.puts ""
-              page.puts "  #{HORIZONTAL_PIPE * (TTY::Screen.width - 4)}  "
-              page.puts ""
-            end
+        format = AnnotationFormatter::Markdown.new
+        # indent each annotation to separate it from the build status
+        annotations.each_with_index do |annotation, index|
+          $stdout.puts format.call(annotation)
+          # horizontal separator between each
+          unless index == annotations.length - 1
+            $stdout.puts ""
+            $stdout.puts "  #{HORIZONTAL_PIPE * (TTY::Screen.width - 4)}  "
+            $stdout.puts ""
           end
         end
       end

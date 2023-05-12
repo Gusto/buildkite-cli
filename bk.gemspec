@@ -41,7 +41,6 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-cli"
 
   spec.add_development_dependency "pry"
-  spec.add_development_dependency "pry-rescue"
   spec.add_development_dependency "pry-stack_explorer"
   spec.add_development_dependency "ruby-lsp"
   spec.add_development_dependency "standard"
