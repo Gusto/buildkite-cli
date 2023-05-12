@@ -57,21 +57,11 @@ module Bk
           annotation_edges = build.annotations.edges
           annotations = annotation_edges.map { |edge| edge.node }
 
+          format = AnnotationFormatter::Markdown.new
           # indent each annotation to separate it from the build status
           annotations.each_with_index do |annotation, index|
-            style = annotation.style
-            color = annotation_colors[style]
 
-            context = annotation.context
-            page.puts "  #{color.call("#{vertical_pipe}#{context}")}"
-            page.puts "  #{color.call(vertical_pipe)}"
-
-            body = annotation.body.text
-            output = TTY::Markdown.parse(body)
-            output.each_line do |line|
-              page.puts "  #{color.call(vertical_pipe)}  #{line}"
-            end
-
+            page.puts format.call(annotation)
             # horizontal separator between each
             unless index == annotations.length - 1
               page.puts ""
