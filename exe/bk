@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 require "bk"
 
-Dry::CLI.new(Bk::CLI::Commands).call
+Dry::CLI.new(Bk::Commands).call
