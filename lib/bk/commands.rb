@@ -95,21 +95,28 @@ module Bk
 
         build_color = build_colors[build.state]
 
-        io.puts "#{build_color.call(vertical_pipe)}#{build.pipeline.slug} / #{build.branch}"
+        build_url = pastel.dim("» #{build.url}")
+        # TODO handle multi-line message better
+        io.puts "#{build_color.call(vertical_pipe)}#{pastel.bold(build.message)} #{build_url}"
         io.puts build_color.call(vertical_pipe)
-        io.puts "#{build_color.call(vertical_pipe)}    #{build.message}"
-        io.puts build_color.call(vertical_pipe)
-        io.puts "#{build_color.call(vertical_pipe)}Build ##{build.number}: #{build.state}"
 
-        if build.state == "RUNNING" || build.state == "FAILING"
+
+        state = if build.state == "RUNNING" || build.state == "FAILING"
           duration = Time.now - started_at
           minutes = (duration / 60).to_i
           seconds = (duration % 60).to_i
-          io.puts "running for #{minutes}m #{seconds}s"
+          "running for #{minutes}m #{seconds}s"
         elsif finished_at
           duration = finished_at - started_at
-          io.puts "#{build_color.call(vertical_pipe)}#{build.state.downcase.capitalize} in #{duration}s"
+          "#{build.state.downcase.capitalize} in #{duration}s"
         end
+
+        parts = [
+          "Build ##{build.number}",
+          build.branch,
+          build_color.call(state)
+        ].join(pastel.dim("  |  "))
+        io.puts "#{build_color.call(vertical_pipe)}#{parts}"
 
         io.string
       end
