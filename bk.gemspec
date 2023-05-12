@@ -5,7 +5,7 @@ require_relative "lib/bk/version"
 Gem::Specification.new do |spec|
   spec.name = "buildkite-cli"
   spec.version = Bk::VERSION
-  spec.licenses = ['MIT']
+  spec.licenses = ["MIT"]
   spec.authors = ["Josh Nichols"]
   spec.email = ["josh.nichols@gusto.com"]
 
@@ -43,4 +43,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-rescue"
   spec.add_development_dependency "pry-stack_explorer"
+  spec.add_development_dependency "ruby-lsp"
+  spec.add_development_dependency "standard"
 end
