@@ -14,7 +14,7 @@ module TTYMarkdownConverterExtension
     match = css_class.match(/^term-(?:[fb]g)(\d+)$/)
     return unless match
 
-    color_code = Integer(match[2])
+    color_code = Integer(match[1])
 
     Pastel::ANSI::ATTRIBUTES.key(color_code)
   end
@@ -45,6 +45,7 @@ module Bk
         io.puts "  #{color.call(vertical_pipe)}"
 
         output = TTY::Markdown.parse(annotation.body.text)
+        output = CGI.unescape_html(output)
 
         output.each_line do |line|
           io.puts "  #{color.call(vertical_pipe)}  #{line}"

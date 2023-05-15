@@ -13,6 +13,7 @@ require "tty-box"
 require "graphql/client"
 require "graphql/client/http"
 require "dry/cli"
+require "cgi"
 
 require_relative "bk/version"
 
