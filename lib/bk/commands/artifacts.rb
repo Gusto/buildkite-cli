@@ -88,7 +88,7 @@ module Bk
         has_next_page = true
 
         while has_next_page
-          result = query(BuildArtifactsQuery, variables: {slug: slug, jobs_after: jobs_after})
+          result = query(BuildArtifactsQuery, variables: { slug: slug, jobs_after: jobs_after })
 
           build = result.data.build
           # only show the first time
@@ -141,11 +141,20 @@ module Bk
           puts "#{path} already exists, skipping"
           return
         end
-        download_url = artifact.to_h["downloadURL"]
-        redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
-        artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
-        FileUtils.mkdir_p(path.dirname)
-        path.write(artifact_response.body)
+
+        sleep_duration = 1
+        begin
+          download_url = artifact.to_h["downloadURL"]
+          redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
+          artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
+          FileUtils.mkdir_p(path.dirname)
+          path.write(artifact_response.body)
+        rescue
+          return if sleep_duration > 300
+          sleep sleep_duration
+          sleep_duration *= 2
+          retry
+        end
       end
     end
   end
