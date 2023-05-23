@@ -151,6 +151,7 @@ module Bk
           path.write(artifact_response.body)
         rescue
           return if sleep_duration > 300
+          puts "Retry"
           sleep sleep_duration
           sleep_duration *= 2
           retry
