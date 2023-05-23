@@ -136,10 +136,14 @@ module Bk
       end
 
       def download_artifact(artifact)
+        path = Pathname.new("tmp/bk/#{artifact.path}")
+        if path.exist?
+          puts "#{path} already exists, skipping"
+          return
+        end
         download_url = artifact.to_h["downloadURL"]
         redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
         artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
-        path = Pathname.new("tmp/bk/#{artifact.path}")
         FileUtils.mkdir_p(path.dirname)
         path.write(artifact_response.body)
       end
