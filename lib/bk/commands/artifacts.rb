@@ -1,3 +1,5 @@
+require 'parallel'
+
 module Bk
   module Commands
     class Artifacts < Base
@@ -101,7 +103,7 @@ module Bk
           has_next_page = build.jobs.page_info.has_next_page
 
           jobs = build.jobs.edges.map(&:node)
-          jobs.each do |job|
+          Parallel.each(jobs) do |job|
             next unless job.respond_to?(:exit_status)
 
             artifacts = job.artifacts.edges.map(&:node).select { |artifact| glob_matches?(glob, artifact.path) }
