@@ -119,7 +119,7 @@ module Bk
 
             artifacts.each do |artifact|
               if download
-                puts "  - #{artifact.path} (downloading to tmp/bk/[filename])"
+                puts "  - Downloading artifact to tmp/bk/#{artifact.path}"
                 download_artifact(artifact)
               else
                 puts "  - #{artifact.path}"
