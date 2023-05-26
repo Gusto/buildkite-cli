@@ -1,4 +1,5 @@
 require 'parallel'
+require 'ruby-progressbar'
 
 module Bk
   module Commands
@@ -103,7 +104,10 @@ module Bk
           has_next_page = build.jobs.page_info.has_next_page
 
           jobs = build.jobs.edges.map(&:node)
-          Parallel.each(jobs) do |job|
+          bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: '%a %t [%c/%C BK jobs]: %B %j%%, %E')
+
+          Parallel.each(jobs, in_threads: 8) do |job|
+            bar.increment
             next unless job.respond_to?(:exit_status)
 
             artifacts = job.artifacts.edges.map(&:node).select { |artifact| glob_matches?(glob, artifact.path) }
@@ -111,18 +115,12 @@ module Bk
 
             color = job_colors[job.exit_status]
             header = color.call(job.label)
-            if job.parallel_group_index && job.parallel_group_total
-              header = "#{header} (#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
-            end
-
-            puts header
 
             artifacts.each do |artifact|
               if download
-                puts "  - Downloading artifact to tmp/bk/#{artifact.path}"
-                download_artifact(artifact)
+                download_artifact(artifact, header, bar)
               else
-                puts "  - #{artifact.path}"
+                bar.log "#{header}: #{artifact.path}"
               end
             end
           end
@@ -137,23 +135,24 @@ module Bk
         end
       end
 
-      def download_artifact(artifact)
+      def download_artifact(artifact, header, bar)
         path = Pathname.new("tmp/bk/#{artifact.path}")
         if path.exist?
-          puts "#{path} already exists, skipping"
+          bar.log "#{header}: #{path} already exists, skipping"
           return
         end
 
         sleep_duration = 1
         begin
+          bar.log "#{header}: Downloading artifact to tmp/bk/#{artifact.path}"
           download_url = artifact.to_h["downloadURL"]
           redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
           artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
           FileUtils.mkdir_p(path.dirname)
           path.write(artifact_response.body)
-        rescue
+        rescue => ex
           return if sleep_duration > 300
-          puts "Retry"
+          bar.log "Retrying after #{sleep_duration} seconds (encountered error: #{ex})"
           sleep sleep_duration
           sleep_duration *= 2
           retry
