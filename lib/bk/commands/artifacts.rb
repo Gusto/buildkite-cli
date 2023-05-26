@@ -75,6 +75,24 @@ module Bk
 
       GRAPHQL
 
+      DownloadableArtifact = Struct.new(:artifact, :job_exit_status, :job_label) do
+        include Format
+        include Color
+
+        def path
+          self.artifact.path
+        end
+
+        def download_url
+          self.artifact.to_h["downloadURL"]
+        end
+
+        def header
+          color = job_colors[self.job_exit_status]
+          color.call(self.job_label)
+        end
+      end
+
       def call(args: {}, url_or_slug: nil, **options)
         slug = determine_slug(url_or_slug)
         unless slug
@@ -101,7 +119,10 @@ module Bk
           has_next_page = build.jobs.page_info.has_next_page
 
           jobs = build.jobs.edges.map(&:node)
+          # See https://github.com/jfelchner/ruby-progressbar/wiki for documentation on ProgressBar
           bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: '%a %t [%c/%C BK jobs]: %B %j%%, %E')
+          bar.log "Fetching artifact paths for #{jobs.count} jobs..."
+          all_matching_artifacts = []
 
           Parallel.each(jobs, in_threads: 8) do |job|
             bar.increment
@@ -110,17 +131,28 @@ module Bk
             artifacts = job.artifacts.edges.map(&:node).select { |artifact| glob_matches?(glob, artifact.path) }
             next unless artifacts.any?
 
-            color = job_colors[job.exit_status]
-            header = color.call(job.label)
-
             artifacts.each do |artifact|
-              if download
-                download_artifact(artifact, header, bar)
-              else
-                bar.log "#{header}: #{artifact.path}"
-              end
+              all_matching_artifacts << DownloadableArtifact.new(
+                artifact,
+                job.exit_status,
+                job.label
+              )
             end
           end
+
+          if download
+            bar.log "Now downloading #{all_matching_artifacts.count} artifacts!"
+            bar = ProgressBar.create(total: all_matching_artifacts.count, throttle_rate: 1, format: '%a %t [%c/%C artifacts]: %B %j%%, %E')
+            Parallel.each(all_matching_artifacts, in_threads: 8) do |artifact|
+              download_artifact(artifact, bar)
+              bar.increment
+            end
+          else
+            all_matching_artifacts.each do |artifact|
+              bar.log "#{artifact.header}: #{artifact.path}"
+            end
+          end
+
         end
       end
 
@@ -132,18 +164,17 @@ module Bk
         end
       end
 
-      def download_artifact(artifact, header, bar)
+      def download_artifact(artifact, bar)
         path = Pathname.new("tmp/bk/#{artifact.path}")
         if path.exist?
-          bar.log "#{header}: #{path} already exists, skipping"
+          bar.log "#{artifact.header}: #{path} already exists, skipping"
           return
         end
 
         sleep_duration = 1
         begin
-          bar.log "#{header}: Downloading artifact to tmp/bk/#{artifact.path}"
-          download_url = artifact.to_h["downloadURL"]
-          redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
+          bar.log "#{artifact.header}: Downloading artifact to tmp/bk/#{artifact.path}"
+          redirected_response_from_aws = Net::HTTP.get_response(URI(artifact.download_url))
           artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
           FileUtils.mkdir_p(path.dirname)
           path.write(artifact_response.body)
