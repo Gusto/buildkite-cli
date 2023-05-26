@@ -1,6 +1,3 @@
-require 'parallel'
-require 'ruby-progressbar'
-
 module Bk
   module Commands
     class Artifacts < Base
