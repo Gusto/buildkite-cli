@@ -84,7 +84,12 @@ GEM
       sorbet-runtime
       syntax_tree (>= 6.1.1, < 7)
     ruby-progressbar (1.13.0)
+    sorbet (0.5.10845)
+      sorbet-static (= 0.5.10845)
     sorbet-runtime (0.5.10821)
+    sorbet-static (0.5.10845-universal-darwin-20)
+    sorbet-static (0.5.10845-universal-darwin-21)
+    sorbet-static (0.5.10845-universal-darwin-22)
     standard (1.28.2)
       language_server-protocol (~> 3.17.0.2)
       lint_roller (~> 1.0)
@@ -139,6 +144,7 @@ DEPENDENCIES
   pry-stack_explorer
   rake (~> 13.0)
   ruby-lsp
+  sorbet
   standard
 
 BUNDLED WITH

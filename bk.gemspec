@@ -44,4 +44,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "pry-stack_explorer"
   spec.add_development_dependency "ruby-lsp"
   spec.add_development_dependency "standard"
+  spec.add_development_dependency "sorbet"
 end
