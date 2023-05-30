@@ -119,7 +119,14 @@ module Bk
           has_next_page = build.jobs.page_info.has_next_page
 
           jobs = build.jobs.edges.map(&:node)
-          # See https://github.com/jfelchner/ruby-progressbar/wiki for documentation on ProgressBar
+          # https://github.com/jfelchner/ruby-progressbar/wiki/Formatting
+          # %a – elapsed time
+          # %t – Title
+          # %c – Number of items currently completed
+          # %C – Total number of items to be completed
+          # %B – The full progress bar including 'incomplete' space
+          # %j – Percentage complete represented as a whole number, right justified to 3 spaces
+          # %E – Estimated time (will fall back to ETA: > 4 Days when it exceeds 99:00:00)
           bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: '%a %t [%c/%C BK jobs]: %B %j%%, %E')
           bar.log "Fetching artifact paths for #{jobs.count} jobs..."
           all_matching_artifacts = []
