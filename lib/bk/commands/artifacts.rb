@@ -89,7 +89,12 @@ module Bk
 
         def header
           color = job_colors[self.job_exit_status]
-          color.call(self.job_label)
+          base_header = color.call(self.job_label)
+          if parallel_notation == ""
+            base_header
+          else
+            "#{base_header} #{parallel_notation}"
+          end
         end
       end
 
@@ -139,10 +144,17 @@ module Bk
             next unless artifacts.any?
 
             artifacts.each do |artifact|
+              if job.parallel_group_index && job.parallel_group_total
+                parallel_notation = "(#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
+              else
+                parallel_notation = ""
+              end
+
               all_matching_artifacts << DownloadableArtifact.new(
                 artifact,
                 job.exit_status,
-                job.label
+                job.label,
+                parallel_notation
               )
             end
           end
