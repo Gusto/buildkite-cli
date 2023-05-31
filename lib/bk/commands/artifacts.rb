@@ -1,5 +1,3 @@
-require 'parallel'
-
 module Bk
   module Commands
     class Artifacts < Base
@@ -77,6 +75,29 @@ module Bk
 
       GRAPHQL
 
+      DownloadableArtifact = Struct.new(:artifact, :job_exit_status, :job_label) do
+        include Format
+        include Color
+
+        def path
+          self.artifact.path
+        end
+
+        def download_url
+          self.artifact.to_h["downloadURL"]
+        end
+
+        def header
+          color = job_colors[self.job_exit_status]
+          base_header = color.call(self.job_label)
+          if parallel_notation == ""
+            base_header
+          else
+            "#{base_header} #{parallel_notation}"
+          end
+        end
+      end
+
       def call(args: {}, url_or_slug: nil, **options)
         slug = determine_slug(url_or_slug)
         unless slug
@@ -103,29 +124,54 @@ module Bk
           has_next_page = build.jobs.page_info.has_next_page
 
           jobs = build.jobs.edges.map(&:node)
-          Parallel.each(jobs) do |job|
+          # https://github.com/jfelchner/ruby-progressbar/wiki/Formatting
+          # %a – elapsed time
+          # %t – Title
+          # %c – Number of items currently completed
+          # %C – Total number of items to be completed
+          # %B – The full progress bar including 'incomplete' space
+          # %j – Percentage complete represented as a whole number, right justified to 3 spaces
+          # %E – Estimated time (will fall back to ETA: > 4 Days when it exceeds 99:00:00)
+          bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: '%a %t [%c/%C BK jobs]: %B %j%%, %E')
+          bar.log "Fetching artifact paths for #{jobs.count} jobs..."
+          all_matching_artifacts = []
+
+          Parallel.each(jobs, in_threads: 8) do |job|
+            bar.increment
             next unless job.respond_to?(:exit_status)
 
             artifacts = job.artifacts.edges.map(&:node).select { |artifact| glob_matches?(glob, artifact.path) }
             next unless artifacts.any?
 
-            color = job_colors[job.exit_status]
-            header = color.call(job.label)
-            if job.parallel_group_index && job.parallel_group_total
-              header = "#{header} (#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
-            end
-
-            puts header
-
             artifacts.each do |artifact|
-              if download
-                puts "  - Downloading artifact to tmp/bk/#{artifact.path}"
-                download_artifact(artifact)
+              if job.parallel_group_index && job.parallel_group_total
+                parallel_notation = "(#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
               else
-                puts "  - #{artifact.path}"
+                parallel_notation = ""
               end
+
+              all_matching_artifacts << DownloadableArtifact.new(
+                artifact,
+                job.exit_status,
+                job.label,
+                parallel_notation
+              )
             end
           end
+
+          if download
+            bar.log "Now downloading #{all_matching_artifacts.count} artifacts!"
+            bar = ProgressBar.create(total: all_matching_artifacts.count, throttle_rate: 1, format: '%a %t [%c/%C artifacts]: %B %j%%, %E')
+            Parallel.each(all_matching_artifacts, in_threads: 8) do |artifact|
+              download_artifact(artifact, bar)
+              bar.increment
+            end
+          else
+            all_matching_artifacts.each do |artifact|
+              bar.log "#{artifact.header}: #{artifact.path}"
+            end
+          end
+
         end
       end
 
@@ -137,23 +183,23 @@ module Bk
         end
       end
 
-      def download_artifact(artifact)
+      def download_artifact(artifact, bar)
         path = Pathname.new("tmp/bk/#{artifact.path}")
         if path.exist?
-          puts "#{path} already exists, skipping"
+          bar.log "#{artifact.header}: #{path} already exists, skipping"
           return
         end
 
         sleep_duration = 1
         begin
-          download_url = artifact.to_h["downloadURL"]
-          redirected_response_from_aws = Net::HTTP.get_response(URI(download_url))
+          bar.log "#{artifact.header}: Downloading artifact to tmp/bk/#{artifact.path}"
+          redirected_response_from_aws = Net::HTTP.get_response(URI(artifact.download_url))
           artifact_response = Net::HTTP.get_response(URI(redirected_response_from_aws["location"]))
           FileUtils.mkdir_p(path.dirname)
           path.write(artifact_response.body)
-        rescue
+        rescue => ex
           return if sleep_duration > 300
-          puts "Retry"
+          bar.log "Retrying after #{sleep_duration} seconds (encountered error: #{ex})"
           sleep sleep_duration
           sleep_duration *= 2
           retry
