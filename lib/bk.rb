@@ -18,6 +18,7 @@ require "cgi"
 require_relative "bk/version"
 require 'parallel'
 require 'ruby-progressbar'
+require 'sorbet-runtime'
 
 
 module Bk
