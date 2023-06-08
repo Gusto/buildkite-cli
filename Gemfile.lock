@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    buildkite-cli (0.1.0)
+    buildkite-cli (0.1.1)
       dry-cli
       graphql-client
       httparty
