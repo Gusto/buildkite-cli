@@ -77,7 +77,7 @@ module Bk
 
       GRAPHQL
 
-      DownloadableArtifact = Struct.new(:artifact, :job_exit_status, :job_label) do
+      DownloadableArtifact = Struct.new(:artifact, :job_exit_status, :job_label, :parallel_notation) do
         include Format
         include Color
 
@@ -109,8 +109,8 @@ module Bk
         glob = options[:glob]
         download = options[:download]
 
-        jobs_after = nil
-        has_next_page = true
+        jobs_after = T.let(nil, T.untyped)
+        has_next_page = T.let(true, T::Boolean)
 
         while has_next_page
           result = query(BuildArtifactsQuery, variables: { slug: slug, jobs_after: jobs_after })
