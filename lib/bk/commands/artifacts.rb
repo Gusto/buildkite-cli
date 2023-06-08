@@ -1,3 +1,5 @@
+# typed: true
+
 module Bk
   module Commands
     class Artifacts < Base
