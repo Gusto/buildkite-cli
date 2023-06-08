@@ -1,5 +1,3 @@
-# typed: true
-
 module Bk
   module Commands
     class Artifacts < Base
@@ -109,8 +107,8 @@ module Bk
         glob = options[:glob]
         download = options[:download]
 
-        jobs_after = T.let(nil, T.untyped)
-        has_next_page = T.let(true, T::Boolean)
+        jobs_after = nil
+        has_next_page = true
 
         while has_next_page
           result = query(BuildArtifactsQuery, variables: { slug: slug, jobs_after: jobs_after })
