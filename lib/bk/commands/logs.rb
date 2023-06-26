@@ -1,7 +1,7 @@
 module Bk
   module Commands
     class Logs < Base
-      desc "Show Artifacts for a Build"
+      desc "Show Logs for a Job"
       argument :url_or_org, type: :string, required: false, desc: "Buildkite organization or Job URL"
       argument :pipeline, type: :string, required: false, desc: "Buildkite pipeline"
       argument :build_number, type: :string, required: false, desc: "Buildkite build number"
