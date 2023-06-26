@@ -80,16 +80,16 @@ module Bk
         include Color
 
         def path
-          self.artifact.path
+          artifact.path
         end
 
         def download_url
-          self.artifact.to_h["downloadURL"]
+          artifact.to_h["downloadURL"]
         end
 
         def header
-          color = job_colors[self.job_exit_status]
-          base_header = color.call(self.job_label)
+          color = job_colors[job_exit_status]
+          base_header = color.call(job_label)
           if parallel_notation == ""
             base_header
           else
@@ -111,7 +111,7 @@ module Bk
         has_next_page = true
 
         while has_next_page
-          result = query(BuildArtifactsQuery, variables: { slug: slug, jobs_after: jobs_after })
+          result = query(BuildArtifactsQuery, variables: {slug: slug, jobs_after: jobs_after})
 
           build = result.data.build
           # only show the first time
@@ -132,7 +132,7 @@ module Bk
           # %B – The full progress bar including 'incomplete' space
           # %j – Percentage complete represented as a whole number, right justified to 3 spaces
           # %E – Estimated time (will fall back to ETA: > 4 Days when it exceeds 99:00:00)
-          bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: '%a %t [%c/%C BK jobs]: %B %j%%, %E')
+          bar = ProgressBar.create(total: jobs.count, throttle_rate: 1, format: "%a %t [%c/%C BK jobs]: %B %j%%, %E")
           bar.log "Fetching artifact paths for #{jobs.count} jobs..."
           all_matching_artifacts = []
 
@@ -144,10 +144,10 @@ module Bk
             next unless artifacts.any?
 
             artifacts.each do |artifact|
-              if job.parallel_group_index && job.parallel_group_total
-                parallel_notation = "(#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
+              parallel_notation = if job.parallel_group_index && job.parallel_group_total
+                "(#{job.parallel_group_index + 1}/#{job.parallel_group_total})"
               else
-                parallel_notation = ""
+                ""
               end
 
               all_matching_artifacts << DownloadableArtifact.new(
@@ -161,7 +161,7 @@ module Bk
 
           if download
             bar.log "Now downloading #{all_matching_artifacts.count} artifacts!"
-            bar = ProgressBar.create(total: all_matching_artifacts.count, throttle_rate: 1, format: '%a %t [%c/%C artifacts]: %B %j%%, %E')
+            bar = ProgressBar.create(total: all_matching_artifacts.count, throttle_rate: 1, format: "%a %t [%c/%C artifacts]: %B %j%%, %E")
             Parallel.each(all_matching_artifacts, in_threads: 8) do |artifact|
               download_artifact(artifact, bar)
               bar.increment
