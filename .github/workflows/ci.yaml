@@ -16,4 +16,4 @@ jobs:
           bundler: default
           bundler-cache: true
       - name: StandardRb check
-        run: bundle exec standardrb --format progress --format github --color --no-fix
+        run: bundle exec standardrb --format progress --format github --color
