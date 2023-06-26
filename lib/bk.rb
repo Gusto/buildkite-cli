@@ -16,8 +16,8 @@ require "dry/cli"
 require "cgi"
 
 require_relative "bk/version"
-require 'parallel'
-require 'ruby-progressbar'
+require "parallel"
+require "ruby-progressbar"
 
 module Bk
   class Error < StandardError; end
