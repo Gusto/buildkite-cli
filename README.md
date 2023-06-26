@@ -38,6 +38,21 @@ Download artifacts of a specific build matching a glob (tip: quote the glob patt
 
     $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log" --download
 
+
+### Logs
+
+Usage:
+- `bk logs <job url>`
+- `bk logs <your org> <pipeline> <build-number> <job-id>`
+
+Displays the logs from a specific job, by URL.
+
+    $ bk logs https://buildkite.com/your-org/your-pipeline/builds/1234#1234-5678-90ab-cdef
+
+Displays the logs from a specific job:
+
+    $ bk logs your-org your-pipeline 1234 1234-5678-90ab-cdef
+
 ### To be continue?
 
 More to come? Whatchu want? Feature requests and PRs welcome!

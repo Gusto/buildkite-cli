@@ -39,6 +39,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-cli"
   spec.add_dependency "parallel"
   spec.add_dependency "ruby-progressbar"
+  spec.add_dependency "buildkit"
 
   spec.add_development_dependency "pry"
   spec.add_development_dependency "pry-stack_explorer"
