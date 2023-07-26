@@ -99,7 +99,7 @@ module Bk
       end
 
       def call(args: {}, url_or_slug: nil, **options)
-        slug = determine_slug(url_or_slug)
+        slug = determine_build_slug(url_or_slug)
         unless slug
           raise ArgumentError, "Unable to figure out slug to use"
         end

@@ -14,6 +14,7 @@ require "graphql/client"
 require "graphql/client/http"
 require "dry/cli"
 require "cgi"
+require "buildkit"
 
 require_relative "bk/version"
 require "parallel"
@@ -40,4 +41,8 @@ module Bk
   Schema = GraphQL::Client.load_schema(SCHEMA_PATH.to_s)
   # Schema = GraphQL::Client.load_schema(HTTP)
   Client = GraphQL::Client.new(schema: Schema, execute: HTTP)
+
+  def self.buildkit
+    @buildkit ||= Buildkit.new(token: ENV["BUILDKITE_API_TOKEN"])
+  end
 end
