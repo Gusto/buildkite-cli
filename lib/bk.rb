@@ -27,7 +27,7 @@ module Bk
   HTTP = GraphQL::Client::HTTP.new("https://graphql.buildkite.com/v1") do
     def headers(context)
       unless (token = context[:access_token] || ENV["BUILDKITE_API_TOKEN"])
-        raise "missing BuildKite access token"
+        raise "missing Buildkite access token"
       end
 
       {
