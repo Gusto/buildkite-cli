@@ -28,15 +28,15 @@ Usage: `bk artifacts [slug_or_url] [--glob <pattern>] [--download]`
 
 Display artifacts of a specific build:
 
-    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234
+    $ bk artifacts https://buildkite.com/your-org/your-pipeline/builds/1234
 
 Display artifacts of a specific build matching a glob (tip: quote the glob pattern to avoid your shell expanding):
 
-    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log"
+    $ bk artifacts https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log"
 
 Download artifacts of a specific build matching a glob (tip: quote the glob pattern to avoid your shell expanding):
 
-    $ bk annotations https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log" --download
+    $ bk artifacts https://buildkite.com/your-org/your-pipeline/builds/1234 --glob "*.log" --download
 
 
 ### Logs
