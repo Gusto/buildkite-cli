@@ -30,7 +30,7 @@ module Bk
               finishedAt
               canceledAt
 
-              jobs(first: 500, after: $jobs_after) {
+              jobs(first: 50, after: $jobs_after) {
                 pageInfo {
                   endCursor
                   hasNextPage
